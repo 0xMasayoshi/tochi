@@ -19,7 +19,7 @@ abstract contract TochiScript is Script {
     function _afterConfigLoaded() internal virtual {}
 
     /// child must point at the JSON folder, e.g. "/script/config"
-    function _configDir()  internal view virtual returns (string memory);
+    function _configDir() internal view virtual returns (string memory);
 
     /// child must pick a name, e.g. via envString("CONFIG")
     function _configName() internal view virtual returns (string memory);

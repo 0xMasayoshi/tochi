@@ -38,7 +38,7 @@ contract TestTochi is TochiTest {
         assertEq(b, hex"deadbeef");
     }
 
-    function testGetString() public view{
+    function testGetString() public view {
         assertEq(tochi.getString("string"), "test");
     }
 }
