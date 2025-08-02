@@ -1,66 +1,141 @@
-## Foundry
+# Tochi
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+A minimal helper for loading JSON configs in Forge scripts.
 
-Foundry consists of:
+## Installation
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+Install directly from GitHub:
 
-## Documentation
-
-https://book.getfoundry.sh/
+```bash
+forge install 0xMasayoshi/tochi
+```
 
 ## Usage
 
-### Build
+### Tochi
 
-```shell
-$ forge build
+Parser Contract: Create a Tochi instance with a raw JSON string and use its typed getters to extract values
+
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.24;
+
+import "forge-std/Script.sol";
+import { Tochi } from "tochi/src/Tochi.sol";
+
+contract UseTochi is Script {
+    function run() external {
+        // 1) read raw JSON from disk
+        string memory json = vm.readFile(string.concat(
+            vm.projectRoot(),
+            "/script/config",
+            "/hello.json"
+        ));
+
+        // 2) create new Tochi instance
+        Tochi tochi = new Tochi(json);
+
+        // 3) use Tochi to extract values
+        string memory loc   = tochi.getString("location");
+        address       owner = tochi.getAddress("owner");
+        uint256       cap   = tochi.getUint("cap");
+
+        emit log(string.concat("Location: ", loc));
+        emit log_address(owner);
+        emit log_uint(cap);
+    }
+}
 ```
 
-### Test
+### TochiScript
 
-```shell
-$ forge test
+Script Base: Inherit `TochiScript` in Forge scripts to get zero-boilerplate config loading and getters:
+
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.24;
+
+import { TochiScript } from "tochi/src/TochiScript.sol";
+
+contract DeployFoo is TochiScript {
+    // 1) point to your JSON folder (relative to project root)
+    function _configDir() internal pure override returns (string memory) {
+        return "/script/config";
+    }
+
+    // 2) pick the filename (without “.json”)
+    function _configName() internal view override returns (string memory) {
+        return vm.envString("TOCHI_CONFIG");  // e.g. “goerli” or “mainnet”
+    }
+
+    function run() external {
+        vm.startBroadcast();
+
+        address owner = tochi.getAddress("owner");
+        string memory sym = tochi.getString("symbol");
+        uint256 cap = tochi.getUint("cap");
+
+        vm.stopBroadcast();
+    }
+}
 ```
 
-### Format
+Run the script:
 
-```shell
-$ forge fmt
+```bash
+TOCHI_CONFIG=ethereum forge script script/DeployFoo.s.sol --broadcast --slow
 ```
 
-### Gas Snapshots
+### TochiTest
 
-```shell
-$ forge snapshot
+Test Base: Extend TochiTest in your Forge tests to auto‐load a JSON fixture and use getters:
+
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.24;
+
+import { TochiTest } from "tochi/test/TochiTest.sol";
+
+contract TestTochi is TochiTest {
+    function _configDir()  internal pure override returns (string memory) {
+        return "/test";    // loads `<projectRoot>/test/test.json`
+    }
+    function _configName() internal pure override returns (string memory) {
+        return "test";
+    }
+
+    function testFoo() public view {
+        address owner = tochi.getAddress("owner");
+        assertEq(owner, address(0));
+    }
+}
 ```
 
-### Anvil
+Run your tests:
 
-```shell
-$ anvil
+```bash
+forge test
 ```
 
-### Deploy
+### TochiChef
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
+Factory Contract: A helper contract for deploying Tochi instances.
 
-### Cast
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.24;
 
-```shell
-$ cast <subcommand>
-```
+import "forge-std/Script.sol";
+import { TochiChef } from "tochi/src/TochiChef.sol";
 
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+contract DeployHello is Script {
+    function run() external {
+        vm.startBroadcast();
+        TochiChef chef = new TochiChef();
+        Tochi tochi = chef.fromFile("/script/config", "hello");
+        string memory loc = tochi.getString("location");
+        emit log(string.concat("Hello ", loc, "!"));
+        vm.stopBroadcast();
+    }
+}
 ```
