@@ -91,7 +91,7 @@ TOCHI_CONFIG=ethereum forge script script/DeployFoo.s.sol --broadcast --slow
 
 ### TochiTest
 
-Test Base: Extend TochiTest in your Forge tests to auto‐load a JSON fixture and use getters:
+Base contract for Forge scripts — auto-loads your config and exposes tochi:
 
 ```solidity
 // SPDX-License-Identifier: UNLICENSED
