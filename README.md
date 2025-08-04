@@ -1,6 +1,6 @@
 # Tochi
 
-A minimal helper for loading JSON configs in Forge scripts.
+A minimal helper library for loading and parsing JSON configs in Foundry scripts and tests.
 
 ## Installation
 
@@ -12,65 +12,68 @@ forge install 0xMasayoshi/tochi
 
 ## Usage
 
-### Tochi
+### Library
 
-Parser Contract: Create a Tochi instance with a raw JSON string and use its typed getters to extract values
+Import and attach the tochi library to the Tochi UDVT type:
 
 ```solidity
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
 import "forge-std/Script.sol";
-import { Tochi } from "tochi/src/Tochi.sol";
+import { tochiLib, Tochi } from "tochi/src/Tochi.sol";
 
 contract UseTochi is Script {
+    using tochiLib for Tochi;
+
     function run() external {
-        // 1) read raw JSON from disk
-        string memory json = vm.readFile(string.concat(
-            vm.projectRoot(),
-            "/script/config",
-            "/hello.json"
-        ));
+        // 1) load JSON from file
+        Tochi tochi = tochi.fromFile("/script/config", "hello");
 
-        // 2) create new Tochi instance
-        Tochi tochi = new Tochi(json);
+        // 2) extract primitives
+        string memory name = tochi.getString("name");
+        uint256 supply = tochi.getUint("supply");
+        address owner = tochi.getAddress("owner");
 
-        // 3) use Tochi to extract values
-        string memory loc   = tochi.getString("location");
-        address       owner = tochi.getAddress("owner");
-        uint256       cap   = tochi.getUint("cap");
+        // 3) drill into nested object
+        Tochi net = tochi.getObject("network");
+        string memory url = net.getString("url");
 
-        emit log(string.concat("Location: ", loc));
+        emit log(string.concat("Name: ", name));
+        emit log_uint(supply);
         emit log_address(owner);
-        emit log_uint(cap);
+        emit log(string.concat("Network URL: ", url));
     }
 }
 ```
 
 ### TochiScript
 
-Script Base: Inherit `TochiScript` in Forge scripts to get zero-boilerplate config loading and getters:
+Base contract for Forge scripts - auto-loads your config and exposes tochi:
 
 ```solidity
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import { TochiScript } from "tochi/src/TochiScript.sol";
+import { TochiScript, tochiLib, Tochi } from "tochi/src/TochiScript.sol";
 
 contract DeployFoo is TochiScript {
-    // 1) point to your JSON folder (relative to project root)
+    using tochiLib for Tochi;
+
+    // point to your JSON folder (relative to project root)
     function _configDir() internal pure override returns (string memory) {
         return "/script/config";
     }
 
-    // 2) pick the filename (without “.json”)
+    // pick the filename (without “.json”)
     function _configName() internal view override returns (string memory) {
-        return vm.envString("TOCHI_CONFIG");  // e.g. “goerli” or “mainnet”
+        return vm.envString("TOCHI_CONFIG"); 
     }
 
     function run() external {
         vm.startBroadcast();
 
+        // `tochi` is already loaded
         address owner = tochi.getAddress("owner");
         string memory sym = tochi.getString("symbol");
         uint256 cap = tochi.getUint("cap");
@@ -94,17 +97,23 @@ Test Base: Extend TochiTest in your Forge tests to auto‐load a JSON fixture an
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import { TochiTest } from "tochi/test/TochiTest.sol";
+import { TochiTest, tochiLib, Tochi } from "tochi/test/TochiTest.sol";
 
 contract TestTochi is TochiTest {
+    using tochiLib for Tochi;
+
+    // point to your JSON folder (relative to project root)
     function _configDir()  internal pure override returns (string memory) {
-        return "/test";    // loads `<projectRoot>/test/test.json`
+        return "/test";
     }
+
+    // pick the filename (without “.json”)
     function _configName() internal pure override returns (string memory) {
         return "test";
     }
 
     function testFoo() public view {
+        // `tochi` is loaded with test/test.json
         address owner = tochi.getAddress("owner");
         assertEq(owner, address(0));
     }
@@ -115,27 +124,4 @@ Run your tests:
 
 ```bash
 forge test
-```
-
-### TochiChef
-
-Factory Contract: A helper contract for deploying Tochi instances.
-
-```solidity
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.24;
-
-import "forge-std/Script.sol";
-import { TochiChef } from "tochi/src/TochiChef.sol";
-
-contract DeployHello is Script {
-    function run() external {
-        vm.startBroadcast();
-        TochiChef chef = new TochiChef();
-        Tochi tochi = chef.fromFile("/script/config", "hello");
-        string memory loc = tochi.getString("location");
-        emit log(string.concat("Hello ", loc, "!"));
-        vm.stopBroadcast();
-    }
-}
 ```

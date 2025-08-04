@@ -5,5 +5,8 @@
   "bool": true,
   "bytes32": "0x0000000000000000000000000000000000000000000000000000000000000042",
   "bytes": "0xdeadbeef",
-  "string": "test"
+  "string": "test",
+  "object": {
+    "string": "test"
+  }
 }

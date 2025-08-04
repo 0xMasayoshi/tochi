@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import {TochiScript} from "../src/TochiScript.sol";
+import {TochiScript, Tochi, tochiLib} from "../src/TochiScript.sol";
 import {console} from "forge-std/console.sol";
 
 contract Hello is TochiScript {
+    using tochiLib for Tochi;
+
     function _configDir() internal pure override returns (string memory) {
         return "/script";
     }

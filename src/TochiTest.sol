@@ -2,16 +2,15 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import {Test} from "forge-std/Test.sol";
-import {Tochi} from "./Tochi.sol";
-import {TochiChef} from "./TochiChef.sol";
+import {Tochi, tochiLib} from "./Tochi.sol";
 
 abstract contract TochiTest is Test {
+    using tochiLib for Tochi;
     Tochi internal tochi;
 
     /// sealed setUp() – always loads your config
     function setUp() public {
-        TochiChef tochiChef = new TochiChef();
-        tochi = tochiChef.fromFile(_configDir(), _configName());
+        tochi = tochiLib.fromFile(_configDir(), _configName());
         _afterConfigLoaded();
     }
 
