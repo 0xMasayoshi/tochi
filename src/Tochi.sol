@@ -16,24 +16,14 @@ library tochiLib {
     using stdJson for string;
 
     /// @dev Bound cheat-code interface for file and JSON parsing
-    VmSafe private constant VM =
-        VmSafe(address(uint160(uint256(keccak256("hevm cheat code")))));
+    VmSafe private constant VM = VmSafe(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     /// @notice Load a JSON file from disk and wrap it in a Tochi struct
     /// @param dir Directory path relative to the project root (e.g. "/script/config")
     /// @param name Filename without the ".json" extension
     /// @return A new Tochi struct with raw JSON and empty prefix
-    function fromFile(
-        string memory dir,
-        string memory name
-    ) internal view returns (Tochi memory) {
-        string memory path = string.concat(
-            VM.projectRoot(),
-            dir,
-            "/",
-            name,
-            ".json"
-        );
+    function fromFile(string memory dir, string memory name) internal view returns (Tochi memory) {
+        string memory path = string.concat(VM.projectRoot(), dir, "/", name, ".json");
         string memory raw = VM.readFile(path);
         require(bytes(raw).length > 0, "Tochi: file not found");
         return Tochi({raw: raw, prefix: ""});
@@ -52,23 +42,16 @@ library tochiLib {
     /// @param t The Tochi struct containing raw JSON and prefix
     /// @param key The JSON key to append
     /// @return The combined JSON path (e.g. ".prefix.key")
-    function _path(
-        Tochi memory t,
-        string memory key
-    ) private pure returns (string memory) {
+    function _path(Tochi memory t, string memory key) private pure returns (string memory) {
         string memory _key = _dot(key);
-        return
-            bytes(t.prefix).length == 0 ? _key : string.concat(t.prefix, _key);
+        return bytes(t.prefix).length == 0 ? _key : string.concat(t.prefix, _key);
     }
 
     /// @notice Create a new Tochi scoped to a nested JSON object/array
     /// @param t The parent Tochi struct
     /// @param key The key of the nested object or array
     /// @return A new Tochi struct with updated prefix
-    function getObject(
-        Tochi memory t,
-        string memory key
-    ) internal pure returns (Tochi memory) {
+    function getObject(Tochi memory t, string memory key) internal pure returns (Tochi memory) {
         string memory newPrefix = _path(t, key);
         return Tochi({raw: t.raw, prefix: newPrefix});
     }
@@ -77,10 +60,7 @@ library tochiLib {
     /// @param t The Tochi struct
     /// @param key The JSON key to read
     /// @return The parsed address
-    function getAddress(
-        Tochi memory t,
-        string memory key
-    ) internal pure returns (address) {
+    function getAddress(Tochi memory t, string memory key) internal pure returns (address) {
         return t.raw.readAddress(_path(t, key));
     }
 
@@ -88,10 +68,7 @@ library tochiLib {
     /// @param t The Tochi struct
     /// @param key The JSON key to read
     /// @return The parsed uint256
-    function getUint(
-        Tochi memory t,
-        string memory key
-    ) external pure returns (uint256) {
+    function getUint(Tochi memory t, string memory key) external pure returns (uint256) {
         return t.raw.readUint(_dot(key));
     }
 
@@ -99,10 +76,7 @@ library tochiLib {
     /// @param t The Tochi struct
     /// @param key The JSON key to read
     /// @return The parsed int256
-    function getInt(
-        Tochi memory t,
-        string memory key
-    ) external pure returns (int256) {
+    function getInt(Tochi memory t, string memory key) external pure returns (int256) {
         return t.raw.readInt(_dot(key));
     }
 
@@ -110,10 +84,7 @@ library tochiLib {
     /// @param t The Tochi struct
     /// @param key The JSON key to read
     /// @return The parsed bool
-    function getBool(
-        Tochi memory t,
-        string memory key
-    ) external pure returns (bool) {
+    function getBool(Tochi memory t, string memory key) external pure returns (bool) {
         return t.raw.readBool(_dot(key));
     }
 
@@ -121,10 +92,7 @@ library tochiLib {
     /// @param t The Tochi struct
     /// @param key The JSON key to read
     /// @return The parsed bytes32
-    function getBytes32(
-        Tochi memory t,
-        string memory key
-    ) external pure returns (bytes32) {
+    function getBytes32(Tochi memory t, string memory key) external pure returns (bytes32) {
         return t.raw.readBytes32(_dot(key));
     }
 
@@ -132,10 +100,7 @@ library tochiLib {
     /// @param t The Tochi struct
     /// @param key The JSON key to read
     /// @return The parsed string
-    function getString(
-        Tochi memory t,
-        string memory key
-    ) external pure returns (string memory) {
+    function getString(Tochi memory t, string memory key) external pure returns (string memory) {
         return t.raw.readString(_dot(key));
     }
 
@@ -143,10 +108,7 @@ library tochiLib {
     /// @param t The Tochi struct
     /// @param key The JSON key to read
     /// @return The raw bytes
-    function getBytes(
-        Tochi memory t,
-        string memory key
-    ) external pure returns (bytes memory) {
+    function getBytes(Tochi memory t, string memory key) external pure returns (bytes memory) {
         return t.raw.readBytes(_dot(key));
     }
 }

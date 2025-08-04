@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import {Tochi, TochiTest,tochiLib} from "../src/TochiTest.sol";
+import {Tochi, TochiTest, tochiLib} from "../src/TochiTest.sol";
 
 /// @title Tochi Library Tests
 /// @notice Ensures JSON parsing and nested object support via the tochiLib library
@@ -58,7 +58,7 @@ contract TestTochi is TochiTest {
     /// @notice Verifies that a nested JSON object can be extracted and queried
     function testGetObject() public view {
         // Extract the nested object under the 'object' key
-        Tochi memory objectTochi = tochi.getObject('object');
+        Tochi memory objectTochi = tochi.getObject("object");
         // Ensure its inner 'string' field matches expected
         assertEq(objectTochi.getString("string"), "test");
     }

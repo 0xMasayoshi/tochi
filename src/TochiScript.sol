@@ -6,6 +6,7 @@ import {Tochi, tochiLib} from "./Tochi.sol";
 
 abstract contract TochiScript is Script {
     using tochiLib for Tochi;
+
     Tochi internal tochi;
 
     /// sealed setUp() – always loads your config
